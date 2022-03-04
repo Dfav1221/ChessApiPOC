@@ -1,12 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using ChessEngineInterfacePOC.Interfaces;
 using ChessEngineInterfacePOC.Models;
-using CliWrap;
-using CliWrap.EventStream;
 using Microsoft.Extensions.Options;
-using Stockfish = Stockfish.NET.Stockfish;
-
 
 namespace ChessEngineInterfacePOC.Services;
 
@@ -32,15 +27,15 @@ public class EngineService : IEngineService
         Writer = _engineProcess.StandardInput;
     }
 
-    public string CalculatePosition(string position, int time, char color)
+    public async Task<string> CalculatePosition(string position, int time, char color)
     {
-        Writer.Write($"position {position}\r\ngo wtime {time}");
-        Writer.Flush();
+        await Writer.WriteLineAsync($"position {position}");
+        await Writer.WriteLineAsync($"go wtime {time}");
+        await Writer.FlushAsync();
         _engineProcess.WaitForExit(100);
-        var output = "";
         while (true)
         {
-            var lineAsList = Reader.ReadLine().Split(' ');
+            var lineAsList = (await Reader.ReadLineAsync()).Split(' ');
             if (lineAsList[0] != "bestmove") continue;
             return lineAsList[1];
         }
