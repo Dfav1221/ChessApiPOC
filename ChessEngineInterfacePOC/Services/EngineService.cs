@@ -5,6 +5,8 @@ using ChessEngineInterfacePOC.Models;
 using CliWrap;
 using CliWrap.EventStream;
 using Microsoft.Extensions.Options;
+using Stockfish = Stockfish.NET.Stockfish;
+
 
 namespace ChessEngineInterfacePOC.Services;
 
@@ -13,6 +15,8 @@ public class EngineService : IEngineService
     private Process _engineProcess;
 
     private readonly IOptions<EngineConfig> _options;
+    public StreamWriter Writer;
+    public StreamReader Reader;
 
     public EngineService(IOptions<EngineConfig> options)
     {
@@ -23,27 +27,22 @@ public class EngineService : IEngineService
         _engineProcess.StartInfo.RedirectStandardOutput = true;
         _engineProcess.StartInfo.UseShellExecute = false;
         _engineProcess.StartInfo.CreateNoWindow = true;
+        _engineProcess.Start();
+        Reader = _engineProcess.StandardOutput;
+        Writer = _engineProcess.StandardInput;
     }
 
-    public async Task<string> CalculatePosition(string position, int time, char color)
+    public string CalculatePosition(string position, int time, char color)
     {
-        _engineProcess.Start();
-
-        await using (var writer = _engineProcess.StandardInput)
+        Writer.Write($"position {position}\r\ngo wtime {time}");
+        Writer.Flush();
+        _engineProcess.WaitForExit(100);
+        var output = "";
+        while (true)
         {
-            await writer.WriteAsync($"position {position}\r\ngo wtime {time}");
+            var lineAsList = Reader.ReadLine().Split(' ');
+            if (lineAsList[0] != "bestmove") continue;
+            return lineAsList[1];
         }
-
-        var response = "";
-        using (var reader = _engineProcess.StandardOutput)
-        {
-            var output = await reader.ReadToEndAsync();
-            response = output
-                .Split("bestmove ")[1]
-                .Split('\r')[0];
-        }
-
-
-        return response;
     }
 }

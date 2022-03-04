@@ -15,9 +15,9 @@ public class EngineController : Controller
     }
 
     [HttpGet("test")]
-    public async Task<IActionResult> CalculatePosition([FromRoute] int time,string fenPosition)
+    public Task<IActionResult> CalculatePosition([FromRoute] int time,string fenPosition)
     {
-        var response = await _engineService.CalculatePosition(fenPosition, time, 'W');
-        return Ok(response);
+        var response = _engineService.CalculatePosition(fenPosition, time, 'W');
+        return Task.FromResult<IActionResult>(Ok(response));
     }
 }
