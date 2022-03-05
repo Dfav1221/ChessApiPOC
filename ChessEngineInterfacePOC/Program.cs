@@ -12,6 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<EngineConfig>(builder.Configuration.GetSection("EngineConfig"));
 builder.Services.AddSingleton<IEngineService,EngineService>();
+builder.Services.AddSingleton<IStockfishService, StockfishService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
